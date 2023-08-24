@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 """
-Contains the class DBStorage
+Script for the database storage class for AirBnB clone
 """
-
 import models
 from models.amenity import Amenity
 from models.base_model import BaseModel, Base
@@ -21,23 +20,26 @@ classes = {"Amenity": Amenity, "City": City,
 
 
 class DBStorage:
-    """interaacts with the MySQL database"""
+    """
+    This class stores info into database (MySQL)
+
+    Attributes:
+        __engine (sqlalchemy.Engine): The working SQLAlchemy engine.
+        __session (sqlalchemy.Session): The working SQLAlchemy session.
+    """
     __engine = None
     __session = None
 
     def __init__(self):
-        """Instantiate a DBStorage object"""
-        HBNB_MYSQL_USER = getenv('HBNB_MYSQL_USER')
-        HBNB_MYSQL_PWD = getenv('HBNB_MYSQL_PWD')
-        HBNB_MYSQL_HOST = getenv('HBNB_MYSQL_HOST')
-        HBNB_MYSQL_DB = getenv('HBNB_MYSQL_DB')
-        HBNB_ENV = getenv('HBNB_ENV')
+        """
+        Constructor method for DBStorage class
+        """
         self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.
-                                      format(HBNB_MYSQL_USER,
-                                             HBNB_MYSQL_PWD,
-                                             HBNB_MYSQL_HOST,
-                                             HBNB_MYSQL_DB))
-        if HBNB_ENV == "test":
+                                      format(getenv('HBNB_MYSQL_USER'),
+                                             getenv('HBNB_MYSQL_PWD'),
+                                             getenv('HBNB_MYSQL_HOST'),
+                                             getenv('HBNB_MYSQL_DB')))
+        if getenv('HBNB_ENV') == "test":
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
@@ -51,26 +53,77 @@ class DBStorage:
                     new_dict[key] = obj
         return (new_dict)
 
+    def get(self, cls, id):
+        """
+        On the curret database session get an object of the given class.
+
+        Args:
+            cls (str): Name of object type. If None, no queries.
+            id (str): ID of object to query. If None, no queries.
+        Return:
+             The object based on the class name and its ID.
+        """
+        CLASS = classes[cls.__name__]
+        if CLASS is None:
+            return None
+        for value in self.all(CLASS).values():
+            if value.id == id:
+                return value
+        return None
+
     def new(self, obj):
-        """add the object to the current database session"""
+        """
+        Adds object to the current db session
+
+        Args:
+            obj (object): given object
+        """
         self.__session.add(obj)
 
     def save(self):
-        """commit all changes of the current database session"""
+        """
+        Commit all changes of the current database session
+        """
         self.__session.commit()
 
     def delete(self, obj=None):
-        """delete from the current database session obj if not None"""
+        """
+        Delete an object from the current database session
+
+        Args:
+            obj (object): object to delete if not None
+        """
         if obj is not None:
             self.__session.delete(obj)
 
     def reload(self):
-        """reloads data from the database"""
+        """
+        Reloads the database session
+        """
         Base.metadata.create_all(self.__engine)
-        sess_factory = sessionmaker(bind=self.__engine, expire_on_commit=False)
-        Session = scoped_session(sess_factory)
+        Session = scoped_session(sessionmaker(bind=self.__engine,
+                                              expire_on_commit=False))
         self.__session = Session
 
     def close(self):
-        """call remove() method on the private session attribute"""
+        """
+        Close the session by calling remove() method on the private session
+        attribute.
+        """
         self.__session.remove()
+
+    def count(self, cls=None):
+        """
+        Returns the number of objects in storage according to the given class
+        name. If name is None returns the count of all objects in storage.
+
+        Args:
+            cls (str): The name of the class of None for all.
+        """
+        if cls is None:
+            return len(self.all())
+        else:
+            CLASS = classes[cls.__name__]
+            if CLASS is None:
+                return len(self.all())
+        return len(self.all(CLASS))

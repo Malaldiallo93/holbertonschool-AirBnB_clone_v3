@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 """
-Contains the FileStorage class
+Script for the FileStorage class
 """
-
 import json
 from models.amenity import Amenity
 from models.base_model import BaseModel
@@ -17,15 +16,27 @@ classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
 
 
 class FileStorage:
-    """serializes instances to a JSON file & deserializes back to instances"""
+    """
+    Serializes instances to a JSON file & deserializes back to instances
 
-    # string - path to the JSON file
+    Attributes:
+        __file_path (str): path to the JSON file
+        __objects (dictionary): empty but will store all objects by
+                                <class name>.id
+    """
     __file_path = "file.json"
-    # dictionary - empty but will store all objects by <class name>.id
     __objects = {}
 
     def all(self, cls=None):
-        """returns the dictionary __objects"""
+        """
+        Return all of the objects or of from the given class.
+
+        Args:
+            cls (str): Name of object type. If None, queries all types of
+                       objects.
+        Return:
+            Dict of queried classes. or The self.__objects.
+        """
         if cls is not None:
             new_dict = {}
             for key, value in self.__objects.items():
@@ -34,14 +45,39 @@ class FileStorage:
             return new_dict
         return self.__objects
 
+    def get(self, cls, id):
+        """
+        On the curret database session get an object of the given class.
+
+        Args:
+            cls (str): Name of object type. If None, no queries.
+            id (str): ID of object to query. If None, no queries.
+        Return:
+             The object based on the class name and its ID.
+        """
+        CLASS = classes[cls.__name__]
+        if CLASS is None:
+            return None
+        for value in self.all(CLASS).values():
+            if value.id == id:
+                return value
+        return None
+
     def new(self, obj):
-        """sets in __objects the obj with key <obj class name>.id"""
+        """
+        sets in __objects the obj with key <obj class name>.id
+
+        Args:
+            obj (object): given object
+        """
         if obj is not None:
             key = obj.__class__.__name__ + "." + obj.id
             self.__objects[key] = obj
 
     def save(self):
-        """serializes __objects to the JSON file (path: __file_path)"""
+        """
+        Serializes __objects to the JSON file (path: __file_path)
+        """
         json_objects = {}
         for key in self.__objects:
             json_objects[key] = self.__objects[key].to_dict()
@@ -49,7 +85,9 @@ class FileStorage:
             json.dump(json_objects, f)
 
     def reload(self):
-        """deserializes the JSON file to __objects"""
+        """
+        Deserializes from the JSON file to __objects
+        """
         try:
             with open(self.__file_path, 'r') as f:
                 jo = json.load(f)
@@ -59,12 +97,36 @@ class FileStorage:
             pass
 
     def delete(self, obj=None):
-        """delete obj from __objects if it’s inside"""
+        """
+        Delete obj from __objects if it’s inside
+
+        Args:
+            obj (object): given object
+        """
         if obj is not None:
             key = obj.__class__.__name__ + '.' + obj.id
             if key in self.__objects:
                 del self.__objects[key]
 
     def close(self):
-        """call reload() method for deserializing the JSON file to objects"""
+        """
+        Closes by call reload() method for deserializing the JSON file to
+        objects.
+        """
         self.reload()
+
+    def count(self, cls=None):
+        """
+        Returns the number of objects in storage according to the given class
+        name. If name is None returns the count of all objects in storage.
+
+        Args:
+            cls (str): The name of the class of None for all.
+        """
+        if cls is None:
+            return len(self.all())
+        else:
+            CLASS = classes[cls.__name__]
+            if CLASS is None:
+                return len(self.all())
+        return len(self.all(CLASS))
