@@ -2,7 +2,6 @@
 """
 Contains the TestDBStorageDocs and TestDBStorage classes
 """
-
 from datetime import datetime
 import inspect
 import models
@@ -85,4 +84,23 @@ class TestFileStorage(unittest.TestCase):
 
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_save(self):
-        """Test that save properly saves objects to file.json"""
+        """Test that save properly saves objects to database"""
+
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_get(self):
+        """Test that count method is returning a value greater than 0 for a
+        specific class"""
+        new_state = State(name='Colombia')
+        models.storage.new(new_state)
+        models.storage.save()
+        self.assertTrue(bool(models.storage.get(State, new_state.id)))
+
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_count(self):
+        """count method test"""
+        count = models.storage.count()
+        new_state = State(name='COLOMBIA')
+        models.storage.new(new_state)
+        models.storage.save()
+        new_count = models.storage.count()
+        self.assertNotEqual(count, new_count)
