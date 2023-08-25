@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-Script for the REST API of State class model 
+Script for the REST API of State class model
 """
 from api.v1.views import app_views, State
 from flask import jsonify, abort, request
