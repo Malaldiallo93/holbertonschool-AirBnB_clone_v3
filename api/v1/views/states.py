@@ -2,7 +2,6 @@
 """
 Script for the REST API of State class model 
 """
-
 from api.v1.views import app_views, State
 from flask import jsonify, abort, request
 from models import storage
