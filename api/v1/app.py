@@ -1,38 +1,33 @@
 #!/usr/bin/python3
-"""
-Flask API v1
-"""
-from flask import Flask
-from flask import make_response
-from flask import jsonify
+"""Flask web application"""
+from flask import Flask, jsonify
 from models import storage
 from api.v1.views import app_views
-from os import getenv
+from flask import Blueprint
+import os
 from flask_cors import CORS
-from flasgger import Swagger
 
+"""Create an instance of the Flask application"""
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "0.0.0.0"}})
 
+"""register the blueprint app_views"""
 app.register_blueprint(app_views)
-swagger = Swagger(app)
-
-host = getenv('HBNB_API_HOST') or 5000
-port = getenv('HBNB_API_PORT') or '0.0.0.0'
-
-cors = CORS(app, resources={"*": {"origins": "0.0.0.0"}})
-
-
-@app.teardown_appcontext
-def teardown(self):
-    """Calls close session storage"""
-    storage.close()
 
 
 @app.errorhandler(404)
-def not_found(error):
-    """Error routine"""
-    return make_response(jsonify({'error': 'Not found'}), 404)
+def not_found(e):
+    return jsonify(error="Not found"), 404
 
 
+@app.teardown_appcontext
+def teardown(err):
+    """remove the current session"""
+    storage.close()
+
+
+"""Start the Flask application when the script is run directly"""
 if __name__ == "__main__":
-    app.run(host=host, port=port, threaded=True)
+    host_name = os.environ.get("HBNB_API_HOST", "0.0.0.0")
+    port_name = int(os.environ.get("HBNB_API_PORT", 5000))
+    app.run(host=host_name, port=port_name, threaded=True)
