@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 """
-Route Index
+Route of the index
 """
-
 from api.v1.views import app_views, Place, City, Amenity, Review, State, User
 from flask import jsonify
 from models import storage
